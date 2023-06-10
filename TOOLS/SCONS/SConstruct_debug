@@ -1,0 +1,44 @@
+import os
+import sys
+from glob import glob
+from SCons.Script import Environment
+
+# Take Path from argv
+path = None
+for arg in sys.argv[1:]:
+    if arg.startswith("PATH="):
+        path = arg.split("=")[1]
+        break
+
+# Routes
+compiler_path = os.path.abspath("TOOLS\\MinGW\\bin")
+
+# Flags
+compiler_flags = ["-Wall", "-g", "-O0", "-fprofile-arcs", "-ftest-coverage"]
+cpppath = [path, path+"/include/"]
+cxxflags = []
+
+# Files
+# unity   = glob('TOOLS/UNITY/**/*.cpp', recursive = True)
+sources = glob(path +'/**/*.cpp', recursive = True)
+# sources.append(unity)
+
+# Environments
+env_debug = Environment(CPPPATH=cpppath, CXXFLAGS=cxxflags,
+                        ENV={'PATH': compiler_path},
+                        SRC=sources, CCFLAGS=compiler_flags, LIBS=['gcov'],
+                        CC='gcc', CXX='g++')
+
+# Program rules
+program_debug = env_debug.Program(target = path + '/main_debug', source = env_debug['SRC'], LINKFLAGS=['-L.'])
+
+# Update clean rule
+clean_files = ['*.o', '*.exe', '*.gcda', '*.gcno']
+
+# Find clean files
+clean_files.extend(glob(path + '/**/*.gcno', recursive = True))
+clean_files.extend(glob(path + '/**/*.gcda', recursive = True))
+clean_files.extend(glob(path + '/**/*.gcov', recursive = True))
+
+# Clean rules
+clean = env_debug.Clean(program_debug, clean_files)
