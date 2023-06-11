@@ -12,28 +12,44 @@ for arg in sys.argv[1:]:
 
 # Routes
 compiler_path = os.path.abspath("TOOLS\\MinGW\\bin")
+gtestDir = 'TOOLS\\GoogleTest'
+gtestSrcDir = os.path.join(gtestDir, 'googletest')
+gtestIncDir = os.path.join(gtestDir, 'googletest', 'include')
 
 # Flags
 compiler_flags = ["-Wall", "-O2"]
-cpppath = [path, path+"/include/", "TOOLS/GoogleTest/googletest/include/", "TOOLS/GoogleTest/googletest/"]
-cxxflags = ["-DGTEST_CREATE_SHARED_LIBRARY=1", "-DGTEST_LINKED_AS_SHARED_LIBRARY=1"]
+cpppath = ['.', path, path+"/include/", "TOOLS/GoogleTest/googletest/include/", "TOOLS/GoogleTest/googletest/"]
+cxxflags = []
 
 # Files
-googleSource = glob('TOOLS/GoogleTest/googletest/src/**/*.cc', recursive=True)
+googleSources = Glob(os.path.join(gtestSrcDir, '*.cc'))
 cppSources = glob(path + '/**/*.cpp', recursive=True)
 sources = glob(path + '/**/*.c', recursive=True)
-sources.append(googleSource)
 sources.append(cppSources)
-print(sources)
 
-# Environments
-env_target = Environment(CPPPATH=cpppath, CXXFLAGS=cxxflags, 
-                         ENV={'PATH': compiler_path}, SRC=sources, 
-                         CCFLAGS=compiler_flags,
-                         CC='gcc', CXX='g++')
+# Environment
+env_target = Environment()
+
+# Add paths
+env_target.Append(CPPPATH=cpppath)
+
+# GoogleTest Library
+gtest_lib = env_target.StaticLibrary('gtest', googleSources)
+
+# GoogleTest Library path
+gtest_lib_path = os.path.join('.', 'libgtest.a')
+gtest_lib_dir = os.path.dirname(gtest_lib_path)
+print(gtest_lib_dir)
+
+# Complete Environment
+env_target.Append(CXXFLAGS=cxxflags, 
+                  ENV={'PATH': compiler_path},
+                  SRC=sources, CCFLAGS=compiler_flags, LIBS=['gtest', 'gcov'],
+                  LIBPATH=[gtest_lib_dir],
+                  )
 
 # Program rules
-program_target = env_target.Program(target = path + '/main_target', source = env_target['SRC'])
+program_target = env_target.Program(target = path + '/main_target', source = env_target['SRC'], LINKFLAGS=['-L.',  '-lgtest'])
 
 # Update clean rule
 clean_files = ['*.o', '*.exe', '*.gcda', '*.gcno']
