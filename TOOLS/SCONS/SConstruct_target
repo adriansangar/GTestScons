@@ -15,13 +15,16 @@ compiler_path = os.path.abspath("TOOLS\\MinGW\\bin")
 
 # Flags
 compiler_flags = ["-Wall", "-O2"]
-cpppath = [path, path+"/include/"]
-cxxflags = []
+cpppath = [path, path+"/include/", "TOOLS/GoogleTest/googletest/include/", "TOOLS/GoogleTest/googletest/"]
+cxxflags = ["-DGTEST_CREATE_SHARED_LIBRARY=1", "-DGTEST_LINKED_AS_SHARED_LIBRARY=1"]
 
 # Files
-# unity = glob('TOOLS/UNITY/**/*.c', recursive=True)
-sources = glob(path + '/**/*.cpp', recursive=True)
-# sources.append(unity)
+googleSource = glob('TOOLS/GoogleTest/googletest/src/**/*.cc', recursive=True)
+cppSources = glob(path + '/**/*.cpp', recursive=True)
+sources = glob(path + '/**/*.c', recursive=True)
+sources.append(googleSource)
+sources.append(cppSources)
+print(sources)
 
 # Environments
 env_target = Environment(CPPPATH=cpppath, CXXFLAGS=cxxflags, 
